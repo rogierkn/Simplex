@@ -1,0 +1,41 @@
+version: '3'
+services:
+
+  builder:
+    container_name: builder
+    build: 
+      context: .
+      dockerfile: ./docker/services/builder/Dockerfile
+    volumes:
+      - "${builder_ssh_key}:/root/.ssh/authorized_keys" # Add the public key used for incoming SSH connections
+      - "${git_deploy_key}:/root/.ssh/id_rsa" # Set the private key used to read from github
+      - "./applications:/var/www/applications"
+      - "./docker/storage/builder/ssh:/etc/ssh/keys" # Store the generated SSH host keys
+    ports:
+      - "${builder_ssh_port}:22" # SSH port used to access the builder container from outside
+
+  nginx:
+    container_name: nginx
+    build: 
+      context: .
+      dockerfile: ./docker/services/nginx/Dockerfile
+    volumes:
+      - "./applications:/var/www/applications"
+    ports:
+      - "80:80"
+
+  php:
+    container_name: php
+    build:
+      context: .
+      dockerfile: ./docker/services/php/Dockerfile
+    volumes:
+      - "./applications:/var/www/applications:cached"
+
+  database:
+    container_name: database
+    image: mysql:latest
+    volumes:
+      - "./applications/database:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"

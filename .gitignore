@@ -1,0 +1,4 @@
+.idea
+applications/database/*
+docker/storage/builder/ssh/*
+.env
